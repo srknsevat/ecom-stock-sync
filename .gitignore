@@ -1,8 +1,7 @@
 # Maven
 /target/
 !.mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.jar
-.mvn/
+!.mvn/wrapper/maven-wrapper.properties
 
 # IntelliJ
 .idea/
