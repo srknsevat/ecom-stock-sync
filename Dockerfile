@@ -21,4 +21,4 @@ COPY --from=builder /app/target/ecom-stock-sync-0.0.1-SNAPSHOT.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar", "--spring.profiles.active=railway", "--server.port=${PORT}"]
+CMD ["sh", "-c", "java -jar app.jar --spring.profiles.active=railway --server.port=${PORT}"]
