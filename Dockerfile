@@ -1,23 +1,23 @@
-FROM eclipse-temurin:17-jre
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Maven wrapper'ı kopyala
-COPY .mvn .mvn
-COPY mvnw .
-COPY pom.xml .
+# Tüm dosyaları kopyala
+COPY . .
 
-# Bağımlılıkları indir
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
-
-# Kaynak kodunu kopyala
-COPY src ./src
+# Maven wrapper'ı çalıştırılabilir yap
+RUN chmod +x mvnw
 
 # Uygulamayı derle
 RUN ./mvnw clean package -DskipTests -B
 
-# Jar'ı çalıştırılabilir hale getir
-RUN mv target/ecom-stock-sync-0.0.1-SNAPSHOT.jar app.jar
+# --- Runtime image ---
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+# Jar'ı builder aşamasından kopyala
+COPY --from=builder /app/target/ecom-stock-sync-0.0.1-SNAPSHOT.jar app.jar
 
 # Start script'i kopyala ve çalıştırılabilir yap
 COPY start.sh .
