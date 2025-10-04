@@ -1,1 +1,1 @@
-web: java -jar app.jar --spring.profiles.active=railway
+web: java -jar app.jar --spring.profiles.active=railway --server.port=$PORT

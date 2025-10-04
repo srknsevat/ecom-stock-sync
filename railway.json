@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "java -jar app.jar --spring.profiles.active=railway --server.port=$PORT",
+    "startCommand": "web",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
