@@ -6,6 +6,7 @@ import com.ornek.ecomstocksync.entity.Supplier;
 import com.ornek.ecomstocksync.repository.MaterialCardRepository;
 import com.ornek.ecomstocksync.repository.StockMovementRepository;
 import com.ornek.ecomstocksync.service.MaterialCardService;
+import com.ornek.ecomstocksync.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,9 @@ public class MaterialCardServiceImpl implements MaterialCardService {
     
     @Autowired
     private StockMovementRepository stockMovementRepository;
+    
+    @Autowired
+    private SupplierService supplierService;
     
     @Override
     public List<MaterialCard> findAll() {
@@ -61,7 +65,7 @@ public class MaterialCardServiceImpl implements MaterialCardService {
     }
     
     @Override
-    public List<MaterialCard> findBySupplier(String supplier) {
+    public List<MaterialCard> findBySupplier(Supplier supplier) {
         return materialCardRepository.findBySupplier(supplier);
     }
     
@@ -228,11 +232,15 @@ public class MaterialCardServiceImpl implements MaterialCardService {
     }
     
     @Override
-    public void assignSupplier(Long materialId, String supplierName, String supplierCode) {
+    public void assignSupplier(Long materialId, Long supplierId, String supplierCode) {
         MaterialCard material = materialCardRepository.findById(materialId)
             .orElseThrow(() -> new RuntimeException("Material not found"));
         
-        material.setSupplier(supplierName);
+        // Supplier entity'yi bul ve ata
+        Supplier supplier = supplierService.findById(supplierId)
+            .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        
+        material.setSupplier(supplier);
         material.setSupplierCode(supplierCode);
         materialCardRepository.save(material);
     }

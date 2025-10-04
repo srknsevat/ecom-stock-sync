@@ -24,7 +24,7 @@ public interface MaterialCardService {
     
     List<MaterialCard> findByStatus(String status);
     
-    List<MaterialCard> findBySupplier(String supplier);
+    List<MaterialCard> findBySupplier(Supplier supplier);
     
     List<MaterialCard> findLowStockMaterials();
     
@@ -59,7 +59,7 @@ public interface MaterialCardService {
     void updateLastPurchaseCost(Long materialId, BigDecimal lastPurchaseCost);
     
     // Supplier management
-    void assignSupplier(Long materialId, String supplierName, String supplierCode);
+    void assignSupplier(Long materialId, Long supplierId, String supplierCode);
     
     void removeSupplier(Long materialId);
     
