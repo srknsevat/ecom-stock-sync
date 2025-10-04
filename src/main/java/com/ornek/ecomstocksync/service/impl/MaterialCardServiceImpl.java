@@ -2,6 +2,7 @@ package com.ornek.ecomstocksync.service.impl;
 
 import com.ornek.ecomstocksync.entity.MaterialCard;
 import com.ornek.ecomstocksync.entity.StockMovement;
+import com.ornek.ecomstocksync.entity.Supplier;
 import com.ornek.ecomstocksync.repository.MaterialCardRepository;
 import com.ornek.ecomstocksync.repository.StockMovementRepository;
 import com.ornek.ecomstocksync.service.MaterialCardService;
@@ -241,7 +242,7 @@ public class MaterialCardServiceImpl implements MaterialCardService {
         MaterialCard material = materialCardRepository.findById(materialId)
             .orElseThrow(() -> new RuntimeException("Material not found"));
         
-        material.setSupplier(null);
+        material.setSupplier((Supplier) null);
         material.setSupplierCode(null);
         materialCardRepository.save(material);
     }

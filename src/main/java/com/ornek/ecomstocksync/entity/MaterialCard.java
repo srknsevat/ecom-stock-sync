@@ -44,8 +44,6 @@ public class MaterialCard {
     @Column(precision = 19, scale = 4)
     private BigDecimal lastPurchaseCost = BigDecimal.ZERO;
     
-    @Column(length = 100)
-    private String supplier;
     
     @Column(length = 50)
     private String supplierCode;
@@ -121,8 +119,12 @@ public class MaterialCard {
     public BigDecimal getLastPurchaseCost() { return lastPurchaseCost; }
     public void setLastPurchaseCost(BigDecimal lastPurchaseCost) { this.lastPurchaseCost = lastPurchaseCost; }
     
-    public String getSupplier() { return supplier; }
-    public void setSupplier(String supplier) { this.supplier = supplier; }
+    public String getSupplierName() { return supplier != null ? supplier.getSupplierName() : null; }
+    public void setSupplierName(String supplierName) { 
+        if (supplier != null) {
+            supplier.setSupplierName(supplierName);
+        }
+    }
     
     public String getSupplierCode() { return supplierCode; }
     public void setSupplierCode(String supplierCode) { this.supplierCode = supplierCode; }

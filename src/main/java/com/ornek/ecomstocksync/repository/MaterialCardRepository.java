@@ -1,6 +1,7 @@
 package com.ornek.ecomstocksync.repository;
 
 import com.ornek.ecomstocksync.entity.MaterialCard;
+import com.ornek.ecomstocksync.entity.Supplier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +20,7 @@ public interface MaterialCardRepository extends JpaRepository<MaterialCard, Long
     
     List<MaterialCard> findByStatus(String status);
     
-    List<MaterialCard> findBySupplier(String supplier);
+    List<MaterialCard> findBySupplier(Supplier supplier);
     
     @Query("SELECT m FROM MaterialCard m WHERE m.currentStock <= m.minimumStock")
     List<MaterialCard> findLowStockMaterials();
