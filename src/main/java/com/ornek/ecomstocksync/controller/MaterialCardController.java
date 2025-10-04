@@ -1,7 +1,9 @@
 package com.ornek.ecomstocksync.controller;
 
 import com.ornek.ecomstocksync.entity.MaterialCard;
+import com.ornek.ecomstocksync.entity.Supplier;
 import com.ornek.ecomstocksync.service.MaterialCardService;
+import com.ornek.ecomstocksync.service.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,9 @@ public class MaterialCardController {
     
     @Autowired
     private MaterialCardService materialCardService;
+    
+    @Autowired
+    private SupplierService supplierService;
     
     @GetMapping
     public List<MaterialCard> getAllMaterials() {
@@ -65,8 +70,10 @@ public class MaterialCardController {
         return materialCardService.findByStatus(status);
     }
     
-    @GetMapping("/supplier/{supplier}")
-    public List<MaterialCard> getMaterialsBySupplier(@PathVariable String supplier) {
+    @GetMapping("/supplier/{supplierId}")
+    public List<MaterialCard> getMaterialsBySupplier(@PathVariable Long supplierId) {
+        Supplier supplier = supplierService.findById(supplierId)
+            .orElseThrow(() -> new IllegalArgumentException("Supplier not found"));
         return materialCardService.findBySupplier(supplier);
     }
     
@@ -199,10 +206,10 @@ public class MaterialCardController {
     // Supplier management endpoints
     @PutMapping("/{id}/supplier")
     public ResponseEntity<Void> assignSupplier(@PathVariable Long id,
-                                             @RequestParam String supplierName,
+                                             @RequestParam Long supplierId,
                                              @RequestParam String supplierCode) {
         try {
-            materialCardService.assignSupplier(id, supplierName, supplierCode);
+            materialCardService.assignSupplier(id, supplierId, supplierCode);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
