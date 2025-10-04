@@ -37,4 +37,12 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     
     @Query("SELECT sm FROM StockMovement sm WHERE sm.operator = :operator")
     List<StockMovement> findByOperator(@Param("operator") String operator);
+    
+    List<StockMovement> findByReferenceContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String reference, String description);
+    
+    @Query("SELECT COUNT(sm) FROM StockMovement sm WHERE sm.movementDate BETWEEN :startDate AND :endDate")
+    Long countByMovementDateBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT sm.movementType, COUNT(sm) FROM StockMovement sm WHERE sm.movementDate BETWEEN :startDate AND :endDate GROUP BY sm.movementType")
+    List<Object[]> countByMovementTypeAndDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

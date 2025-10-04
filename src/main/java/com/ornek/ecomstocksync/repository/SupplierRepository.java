@@ -16,12 +16,18 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     
     List<Supplier> findByStatus(String status);
     
-    List<Supplier> findByCountry(String country);
+    List<Supplier> findByCountryIgnoreCase(String country);
     
-    List<Supplier> findByCity(String city);
+    List<Supplier> findByCityIgnoreCase(String city);
     
-    @Query("SELECT s FROM Supplier s WHERE s.supplierName LIKE %:name% OR s.supplierCode LIKE %:name%")
-    List<Supplier> findByNameOrCodeContaining(@Param("name") String name);
+    boolean existsBySupplierCode(String supplierCode);
+    
+    boolean existsByEmail(String email);
+    
+    long countByStatus(String status);
+    
+    @Query("SELECT s FROM Supplier s WHERE LOWER(s.supplierName) LIKE LOWER(:name) OR LOWER(s.supplierCode) LIKE LOWER(:name)")
+    List<Supplier> findBySupplierNameContainingIgnoreCaseOrSupplierCodeContainingIgnoreCase(@Param("name") String name, @Param("name") String name2);
     
     @Query("SELECT s FROM Supplier s WHERE s.contactPerson LIKE %:contact%")
     List<Supplier> findByContactPersonContaining(@Param("contact") String contact);

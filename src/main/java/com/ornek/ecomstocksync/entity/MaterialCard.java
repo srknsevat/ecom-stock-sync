@@ -74,6 +74,10 @@ public class MaterialCard {
     @OneToMany(mappedBy = "childMaterial", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<BillOfMaterial> childBoms = new ArrayList<>();
     
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
+    
     // Constructors
     public MaterialCard() {}
     
@@ -146,6 +150,9 @@ public class MaterialCard {
     
     public List<BillOfMaterial> getChildBoms() { return childBoms; }
     public void setChildBoms(List<BillOfMaterial> childBoms) { this.childBoms = childBoms; }
+    
+    public Supplier getSupplier() { return supplier; }
+    public void setSupplier(Supplier supplier) { this.supplier = supplier; }
     
     // Business methods
     public boolean isLowStock() {
