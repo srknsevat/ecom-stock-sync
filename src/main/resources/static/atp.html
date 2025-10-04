@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATP Yönetimi - Ecom Stock Sync</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .table th { background-color: #f8f9fa; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .badge { font-size: 0.75em; }
+        .search-box { max-width: 300px; }
+        .stats-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .constraint-critical { border-left: 4px solid #dc3545; }
+        .constraint-warning { border-left: 4px solid #ffc107; }
+        .constraint-info { border-left: 4px solid #17a2b8; }
+        .atp-available { color: #28a745; }
+        .atp-unavailable { color: #dc3545; }
+        .atp-partial { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Ecom Stock Sync</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin.html">Yönetim</a>
+                <a class="nav-link" href="/materials.html">Malzemeler</a>
+                <a class="nav-link" href="/boms.html">BOM Yönetimi</a>
+                <a class="nav-link" href="/atp.html">ATP Yönetimi</a>
+                <a class="nav-link" href="/logout">Çıkış</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Dashboard Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-speedometer2"></i> ATP Dashboard</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="dashboardSummary">
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="totalMaterials">-</h5>
+                                        <p class="card-text">Toplam Malzeme</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="lowStockMaterials">-</h5>
+                                        <p class="card-text">Düşük Stok</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="overStockMaterials">-</h5>
+                                        <p class="card-text">Aşırı Stok</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="normalStockMaterials">-</h5>
+                                        <p class="card-text">Normal Stok</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="totalStockValue">-</h5>
+                                        <p class="card-text">Toplam Değer</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="totalRecommendations">-</h5>
+                                        <p class="card-text">Öneriler</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATP Calculator -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">ATP Hesaplayıcı</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Malzeme Seçin</label>
+                            <select class="form-select" id="atpMaterialSelect">
+                                <option value="">Malzeme seçin...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Miktar</label>
+                            <input type="number" class="form-control" id="atpQuantity" step="0.01" value="1">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeBOM" checked>
+                                <label class="form-check-label" for="includeBOM">
+                                    BOM kısıtlamalarını dahil et
+                                </label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateATP()">ATP Hesapla</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">ATP Sonucu</h5>
+                    </div>
+                    <div class="card-body" id="atpResult">
+                        <p class="text-muted">ATP hesaplamak için malzeme seçin ve hesapla butonuna tıklayın.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Constraints -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Stok Kısıtlamaları</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Malzeme</th>
+                                        <th>Gerekli Miktar</th>
+                                        <th>Mevcut Stok</th>
+                                        <th>Eksik</th>
+                                        <th>Kısıtlama Tipi</th>
+                                        <th>Açıklama</th>
+                                        <th>Öncelik</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="constraintsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Kısıtlama analizi için ATP hesaplayın</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATP Reports -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">ATP Raporları</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-primary" onclick="loadATPReports()">Tüm Raporlar</button>
+                                <button class="btn btn-outline-success" onclick="loadStockRecommendations()">Stok Önerileri</button>
+                            </div>
+                            <div class="col-md-4">
+                                <select class="form-select" id="categoryFilter">
+                                    <option value="">Kategori seçin...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-info" onclick="filterByCategory()">Kategoriye Göre Filtrele</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Malzeme</th>
+                                        <th>Mevcut Stok</th>
+                                        <th>Min/Max Stok</th>
+                                        <th>ATP Miktarı</th>
+                                        <th>Stok Değeri</th>
+                                        <th>Durum</th>
+                                        <th>Platformlar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Rapor yüklemek için butona tıklayın</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let materials = [];
+        let categories = new Set();
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMaterials();
+            loadDashboardSummary();
+        });
+
+        async function loadMaterials() {
+            try {
+                const response = await fetch('/api/materials');
+                materials = await response.json();
+                populateMaterialSelect();
+                populateCategoryFilter();
+            } catch (error) {
+                console.error('Error loading materials:', error);
+                showAlert('Malzemeler yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        async function loadDashboardSummary() {
+            try {
+                const response = await fetch('/api/atp/dashboard/summary');
+                const data = await response.json();
+                
+                document.getElementById('totalMaterials').textContent = data.totalMaterials;
+                document.getElementById('lowStockMaterials').textContent = data.lowStockMaterials;
+                document.getElementById('overStockMaterials').textContent = data.overStockMaterials;
+                document.getElementById('normalStockMaterials').textContent = data.normalStockMaterials;
+                document.getElementById('totalStockValue').textContent = data.totalStockValue + ' TL';
+                document.getElementById('totalRecommendations').textContent = data.totalRecommendations;
+            } catch (error) {
+                console.error('Error loading dashboard summary:', error);
+            }
+        }
+
+        function populateMaterialSelect() {
+            const select = document.getElementById('atpMaterialSelect');
+            select.innerHTML = '<option value="">Malzeme seçin...</option>';
+            
+            materials.forEach(material => {
+                const option = document.createElement('option');
+                option.value = material.id;
+                option.textContent = `${material.materialCode} - ${material.materialName}`;
+                select.appendChild(option);
+            });
+        }
+
+        function populateCategoryFilter() {
+            materials.forEach(material => {
+                if (material.category) {
+                    categories.add(material.category);
+                }
+            });
+            
+            const select = document.getElementById('categoryFilter');
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        }
+
+        async function calculateATP() {
+            const materialId = document.getElementById('atpMaterialSelect').value;
+            const quantity = parseFloat(document.getElementById('atpQuantity').value);
+            const includeBOM = document.getElementById('includeBOM').checked;
+
+            if (!materialId || !quantity) {
+                showAlert('Lütfen malzeme ve miktar seçin', 'warning');
+                return;
+            }
+
+            try {
+                const endpoint = includeBOM ? 
+                    `/api/atp/${materialId}/with-bom?quantity=${quantity}` :
+                    `/api/atp/${materialId}?quantity=${quantity}`;
+                
+                const response = await fetch(endpoint);
+                const result = await response.json();
+                
+                displayATPResult(result);
+                displayConstraints(result.constraints || []);
+            } catch (error) {
+                console.error('Error calculating ATP:', error);
+                showAlert('ATP hesaplanırken hata oluştu', 'danger');
+            }
+        }
+
+        function displayATPResult(result) {
+            const resultDiv = document.getElementById('atpResult');
+            
+            const statusClass = result.isAvailable ? 'atp-available' : 
+                               result.atpQuantity > 0 ? 'atp-partial' : 'atp-unavailable';
+            const statusText = result.isAvailable ? 'Mevcut' : 
+                              result.atpQuantity > 0 ? 'Kısmi' : 'Mevcut Değil';
+            
+            resultDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Malzeme: ${result.material?.materialCode || 'N/A'}</h6>
+                        <p><strong>İstenen Miktar:</strong> ${result.requestedQuantity}</p>
+                        <p><strong>Mevcut Stok:</strong> ${result.availableQuantity}</p>
+                        <p><strong>ATP Miktarı:</strong> <span class="${statusClass}">${result.atpQuantity}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Durum: <span class="${statusClass}">${statusText}</span></h6>
+                        <p><strong>Kısıtlama Sayısı:</strong> ${result.constraints?.length || 0}</p>
+                        <p><strong>Tahmini Maliyet:</strong> ${result.cost} TL</p>
+                        <p><strong>Hesaplama Zamanı:</strong> ${new Date(result.calculatedAt).toLocaleString()}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayConstraints(constraints) {
+            const tbody = document.getElementById('constraintsTableBody');
+            tbody.innerHTML = '';
+
+            if (constraints.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Kısıtlama bulunamadı</td></tr>';
+                return;
+            }
+
+            constraints.forEach(constraint => {
+                const row = document.createElement('tr');
+                const priorityClass = constraint.priority === 1 ? 'constraint-critical' : 
+                                    constraint.priority === 2 ? 'constraint-warning' : 'constraint-info';
+                
+                row.className = priorityClass;
+                row.innerHTML = `
+                    <td><strong>${constraint.material?.materialCode || 'N/A'}</strong><br>
+                        <small>${constraint.material?.materialName || 'N/A'}</small></td>
+                    <td>${constraint.requiredQuantity}</td>
+                    <td>${constraint.availableQuantity}</td>
+                    <td class="text-danger">${constraint.shortage}</td>
+                    <td><span class="badge bg-secondary">${constraint.constraintType}</span></td>
+                    <td>${constraint.description}</td>
+                    <td>
+                        <span class="badge ${constraint.priority === 1 ? 'bg-danger' : 
+                                           constraint.priority === 2 ? 'bg-warning' : 'bg-info'}">
+                            ${constraint.priority === 1 ? 'Kritik' : 
+                              constraint.priority === 2 ? 'Uyarı' : 'Bilgi'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function loadATPReports() {
+            try {
+                const response = await fetch('/api/atp/reports');
+                const reports = await response.json();
+                displayATPReports(reports);
+            } catch (error) {
+                console.error('Error loading ATP reports:', error);
+                showAlert('ATP raporları yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        async function loadStockRecommendations() {
+            try {
+                const response = await fetch('/api/atp/recommendations');
+                const recommendations = await response.json();
+                displayStockRecommendations(recommendations);
+            } catch (error) {
+                console.error('Error loading stock recommendations:', error);
+                showAlert('Stok önerileri yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        function displayATPReports(reports) {
+            const tbody = document.getElementById('reportsTableBody');
+            tbody.innerHTML = '';
+
+            if (reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Rapor bulunamadı</td></tr>';
+                return;
+            }
+
+            reports.forEach(report => {
+                const row = document.createElement('tr');
+                const statusClass = report.stockStatus === 'LOW_STOCK' ? 'text-danger' :
+                                  report.stockStatus === 'OVER_STOCK' ? 'text-warning' : 'text-success';
+                const statusText = report.stockStatus === 'LOW_STOCK' ? 'Düşük Stok' :
+                                 report.stockStatus === 'OVER_STOCK' ? 'Aşırı Stok' : 'Normal';
+                
+                row.innerHTML = `
+                    <td><strong>${report.material?.materialCode || 'N/A'}</strong><br>
+                        <small>${report.material?.materialName || 'N/A'}</small></td>
+                    <td>${report.currentStock}</td>
+                    <td>
+                        <small>Min: ${report.minimumStock}</small><br>
+                        <small>Max: ${report.maximumStock || '-'}</small>
+                    </td>
+                    <td>${report.atpQuantity}</td>
+                    <td>${report.stockValue} TL</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>${report.platforms?.length || 0} platform</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function displayStockRecommendations(recommendations) {
+            const tbody = document.getElementById('reportsTableBody');
+            tbody.innerHTML = '';
+
+            if (recommendations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Öneri bulunamadı</td></tr>';
+                return;
+            }
+
+            recommendations.forEach(rec => {
+                const row = document.createElement('tr');
+                const priorityClass = rec.priority === 1 ? 'constraint-critical' : 'constraint-warning';
+                
+                row.className = priorityClass;
+                row.innerHTML = `
+                    <td><strong>${rec.material?.materialCode || 'N/A'}</strong><br>
+                        <small>${rec.material?.materialName || 'N/A'}</small></td>
+                    <td>${rec.currentStock}</td>
+                    <td>
+                        <small>Önerilen: ${rec.recommendedStock}</small><br>
+                        <small>Fark: ${rec.stockDifference}</small>
+                    </td>
+                    <td>-</td>
+                    <td>${rec.estimatedCost} TL</td>
+                    <td><span class="badge ${rec.priority === 1 ? 'bg-danger' : 'bg-warning'}">${rec.recommendationType}</span></td>
+                    <td><small>${rec.reason}</small></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function filterByCategory() {
+            const category = document.getElementById('categoryFilter').value;
+            if (!category) {
+                showAlert('Lütfen kategori seçin', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/atp/reports/category/${encodeURIComponent(category)}`);
+                const reports = await response.json();
+                displayATPReports(reports);
+            } catch (error) {
+                console.error('Error filtering by category:', error);
+                showAlert('Kategoriye göre filtreleme sırasında hata oluştu', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
