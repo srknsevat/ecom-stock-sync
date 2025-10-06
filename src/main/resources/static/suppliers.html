@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tedarikçi Yönetimi - Ecom Stock Sync</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
+        .table th { background-color: #f8f9fa; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .badge { font-size: 0.75em; }
+        .search-box { max-width: 300px; }
+        .stats-card { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
+        .supplier-active { color: #28a745; }
+        .supplier-inactive { color: #dc3545; }
+        .contact-info { font-size: 0.9em; color: #6c757d; }
+        .performance-metric { text-align: center; padding: 1rem; }
+        .performance-value { font-size: 1.5rem; font-weight: bold; color: #28a745; }
+        .performance-label { font-size: 0.9rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Ecom Stock Sync</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin.html">Yönetim</a>
+                <a class="nav-link" href="/materials.html">Malzemeler</a>
+                <a class="nav-link" href="/boms.html">BOM Yönetimi</a>
+                <a class="nav-link" href="/atp.html">ATP Yönetimi</a>
+                <a class="nav-link" href="/suppliers.html">Tedarikçiler</a>
+                <a class="nav-link" href="/logout">Çıkış</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Dashboard Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-people"></i> Tedarikçi Dashboard</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="dashboardSummary">
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="totalSuppliers">-</h5>
+                                        <p class="card-text">Toplam Tedarikçi</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="activeSuppliers">-</h5>
+                                        <p class="card-text">Aktif Tedarikçi</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="inactiveSuppliers">-</h5>
+                                        <p class="card-text">Pasif Tedarikçi</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="recentSuppliers">-</h5>
+                                        <p class="card-text">Son Eklenen</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Tedarikçi ara...">
+                    <button class="btn btn-outline-secondary" onclick="searchSuppliers()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="ACTIVE">Aktif</option>
+                    <option value="INACTIVE">Pasif</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-success" onclick="showAddSupplierModal()">
+                    <i class="bi bi-plus"></i> Yeni Tedarikçi
+                </button>
+            </div>
+        </div>
+
+        <!-- Suppliers Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tedarikçi Listesi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tedarikçi Kodu</th>
+                                        <th>Tedarikçi Adı</th>
+                                        <th>İletişim</th>
+                                        <th>Şehir/Ülke</th>
+                                        <th>Malzeme Sayısı</th>
+                                        <th>Durum</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="suppliersTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Tedarikçiler yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Supplier Modal -->
+    <div class="modal fade" id="supplierModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="supplierModalTitle">Yeni Tedarikçi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="supplierForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tedarikçi Kodu *</label>
+                                    <input type="text" class="form-control" id="supplierCode" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tedarikçi Adı *</label>
+                                    <input type="text" class="form-control" id="supplierName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">İletişim Kişisi</label>
+                                    <input type="text" class="form-control" id="contactPerson">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">E-posta</label>
+                                    <input type="email" class="form-control" id="email">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Telefon</label>
+                                    <input type="text" class="form-control" id="phone">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Faks</label>
+                                    <input type="text" class="form-control" id="fax">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Adres</label>
+                            <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Şehir</label>
+                                    <input type="text" class="form-control" id="city">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Ülke</label>
+                                    <input type="text" class="form-control" id="country">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Posta Kodu</label>
+                                    <input type="text" class="form-control" id="postalCode">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Vergi Numarası</label>
+                                    <input type="text" class="form-control" id="taxNumber">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Vergi Dairesi</label>
+                                    <input type="text" class="form-control" id="taxOffice">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Web Sitesi</label>
+                                    <input type="url" class="form-control" id="website">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Durum</label>
+                                    <select class="form-select" id="status">
+                                        <option value="ACTIVE">Aktif</option>
+                                        <option value="INACTIVE">Pasif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Ödeme Koşulları</label>
+                                    <input type="text" class="form-control" id="paymentTerms">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Teslimat Koşulları</label>
+                                    <input type="text" class="form-control" id="deliveryTerms">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSupplier()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplier Performance Modal -->
+    <div class="modal fade" id="performanceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tedarikçi Performansı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="performanceContent">
+                    <!-- Performance data will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let suppliers = [];
+        let currentSupplierId = null;
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSuppliers();
+            loadDashboardSummary();
+        });
+
+        async function loadSuppliers() {
+            try {
+                const response = await fetch('/api/suppliers');
+                suppliers = await response.json();
+                displaySuppliers(suppliers);
+            } catch (error) {
+                console.error('Error loading suppliers:', error);
+                showAlert('Tedarikçiler yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        async function loadDashboardSummary() {
+            try {
+                const response = await fetch('/api/suppliers/dashboard/summary');
+                const data = await response.json();
+                
+                document.getElementById('totalSuppliers').textContent = data.totalSuppliers;
+                document.getElementById('activeSuppliers').textContent = data.activeSuppliers;
+                document.getElementById('inactiveSuppliers').textContent = data.inactiveSuppliers;
+                document.getElementById('recentSuppliers').textContent = data.recentSuppliers?.length || 0;
+            } catch (error) {
+                console.error('Error loading dashboard summary:', error);
+            }
+        }
+
+        function displaySuppliers(suppliersToShow) {
+            const tbody = document.getElementById('suppliersTableBody');
+            tbody.innerHTML = '';
+
+            if (suppliersToShow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tedarikçi bulunamadı</td></tr>';
+                return;
+            }
+
+            suppliersToShow.forEach(supplier => {
+                const row = document.createElement('tr');
+                const statusClass = supplier.status === 'ACTIVE' ? 'supplier-active' : 'supplier-inactive';
+                const statusText = supplier.status === 'ACTIVE' ? 'Aktif' : 'Pasif';
+                
+                row.innerHTML = `
+                    <td><strong>${supplier.supplierCode}</strong></td>
+                    <td>${supplier.supplierName}</td>
+                    <td class="contact-info">
+                        ${supplier.contactPerson ? supplier.contactPerson : '-'}<br>
+                        <small>${supplier.email ? supplier.email : '-'}</small><br>
+                        <small>${supplier.phone ? supplier.phone : '-'}</small>
+                    </td>
+                    <td>
+                        ${supplier.city ? supplier.city : '-'}<br>
+                        <small>${supplier.country ? supplier.country : '-'}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="showSupplierMaterials(${supplier.id})">
+                            <i class="bi bi-box"></i> Malzemeler
+                        </button>
+                    </td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editSupplier(${supplier.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="showSupplierPerformance(${supplier.id})">
+                            <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-${supplier.status === 'ACTIVE' ? 'warning' : 'success'}" 
+                                onclick="toggleSupplierStatus(${supplier.id}, '${supplier.status}')">
+                            <i class="bi bi-${supplier.status === 'ACTIVE' ? 'pause' : 'play'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSupplier(${supplier.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function searchSuppliers() {
+            const keyword = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            let filteredSuppliers = suppliers;
+            
+            if (keyword) {
+                filteredSuppliers = filteredSuppliers.filter(s => 
+                    s.supplierName.toLowerCase().includes(keyword.toLowerCase()) ||
+                    s.supplierCode.toLowerCase().includes(keyword.toLowerCase()) ||
+                    (s.contactPerson && s.contactPerson.toLowerCase().includes(keyword.toLowerCase()))
+                );
+            }
+            
+            if (status) {
+                filteredSuppliers = filteredSuppliers.filter(s => s.status === status);
+            }
+            
+            displaySuppliers(filteredSuppliers);
+        }
+
+        function showAddSupplierModal() {
+            currentSupplierId = null;
+            document.getElementById('supplierModalTitle').textContent = 'Yeni Tedarikçi';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('status').value = 'ACTIVE';
+            
+            const modal = new bootstrap.Modal(document.getElementById('supplierModal'));
+            modal.show();
+        }
+
+        function editSupplier(supplierId) {
+            const supplier = suppliers.find(s => s.id === supplierId);
+            if (!supplier) return;
+            
+            currentSupplierId = supplierId;
+            document.getElementById('supplierModalTitle').textContent = 'Tedarikçi Düzenle';
+            
+            // Fill form with supplier data
+            document.getElementById('supplierCode').value = supplier.supplierCode;
+            document.getElementById('supplierName').value = supplier.supplierName;
+            document.getElementById('contactPerson').value = supplier.contactPerson || '';
+            document.getElementById('email').value = supplier.email || '';
+            document.getElementById('phone').value = supplier.phone || '';
+            document.getElementById('fax').value = supplier.fax || '';
+            document.getElementById('address').value = supplier.address || '';
+            document.getElementById('city').value = supplier.city || '';
+            document.getElementById('country').value = supplier.country || '';
+            document.getElementById('postalCode').value = supplier.postalCode || '';
+            document.getElementById('taxNumber').value = supplier.taxNumber || '';
+            document.getElementById('taxOffice').value = supplier.taxOffice || '';
+            document.getElementById('website').value = supplier.website || '';
+            document.getElementById('status').value = supplier.status;
+            document.getElementById('paymentTerms').value = supplier.paymentTerms || '';
+            document.getElementById('deliveryTerms').value = supplier.deliveryTerms || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('supplierModal'));
+            modal.show();
+        }
+
+        async function saveSupplier() {
+            const supplierData = {
+                supplierCode: document.getElementById('supplierCode').value,
+                supplierName: document.getElementById('supplierName').value,
+                contactPerson: document.getElementById('contactPerson').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                fax: document.getElementById('fax').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                country: document.getElementById('country').value,
+                postalCode: document.getElementById('postalCode').value,
+                taxNumber: document.getElementById('taxNumber').value,
+                taxOffice: document.getElementById('taxOffice').value,
+                website: document.getElementById('website').value,
+                status: document.getElementById('status').value,
+                paymentTerms: document.getElementById('paymentTerms').value,
+                deliveryTerms: document.getElementById('deliveryTerms').value
+            };
+
+            try {
+                let response;
+                if (currentSupplierId) {
+                    response = await fetch(`/api/suppliers/${currentSupplierId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(supplierData)
+                    });
+                } else {
+                    response = await fetch('/api/suppliers', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(supplierData)
+                    });
+                }
+
+                if (response.ok) {
+                    showAlert(currentSupplierId ? 'Tedarikçi güncellendi' : 'Tedarikçi eklendi', 'success');
+                    loadSuppliers();
+                    loadDashboardSummary();
+                    bootstrap.Modal.getInstance(document.getElementById('supplierModal')).hide();
+                } else {
+                    showAlert('Tedarikçi kaydedilemedi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving supplier:', error);
+                showAlert('Tedarikçi kaydedilirken hata oluştu', 'danger');
+            }
+        }
+
+        async function deleteSupplier(supplierId) {
+            if (!confirm('Bu tedarikçiyi silmek istediğinizden emin misiniz?')) return;
+
+            try {
+                const response = await fetch(`/api/suppliers/${supplierId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('Tedarikçi silindi', 'success');
+                    loadSuppliers();
+                    loadDashboardSummary();
+                } else {
+                    showAlert('Tedarikçi silinemedi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting supplier:', error);
+                showAlert('Tedarikçi silinirken hata oluştu', 'danger');
+            }
+        }
+
+        async function toggleSupplierStatus(supplierId, currentStatus) {
+            try {
+                const endpoint = currentStatus === 'ACTIVE' ? 'deactivate' : 'activate';
+                const response = await fetch(`/api/suppliers/${supplierId}/${endpoint}`, {
+                    method: 'PATCH'
+                });
+
+                if (response.ok) {
+                    showAlert(`Tedarikçi ${currentStatus === 'ACTIVE' ? 'pasif' : 'aktif'} yapıldı`, 'success');
+                    loadSuppliers();
+                    loadDashboardSummary();
+                } else {
+                    showAlert('Durum değiştirilemedi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error toggling supplier status:', error);
+                showAlert('Durum değiştirilirken hata oluştu', 'danger');
+            }
+        }
+
+        async function showSupplierPerformance(supplierId) {
+            try {
+                const response = await fetch(`/api/suppliers/${supplierId}/performance`);
+                const performance = await response.json();
+
+                const content = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="performance-metric">
+                                <div class="performance-value">${performance.materialCount}</div>
+                                <div class="performance-label">Malzeme Sayısı</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="performance-metric">
+                                <div class="performance-value">${performance.averageMaterialCost?.toFixed(2) || 0} TL</div>
+                                <div class="performance-label">Ortalama Maliyet</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="performance-metric">
+                                <div class="performance-value">${performance.totalStockValue?.toFixed(2) || 0} TL</div>
+                                <div class="performance-label">Toplam Stok Değeri</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="performance-metric">
+                                <div class="performance-value">${performance.lowStockMaterials}</div>
+                                <div class="performance-label">Düşük Stoklu Malzeme</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('performanceContent').innerHTML = content;
+                const modal = new bootstrap.Modal(document.getElementById('performanceModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error loading supplier performance:', error);
+                showAlert('Performans verileri yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        async function showSupplierMaterials(supplierId) {
+            try {
+                const response = await fetch(`/api/suppliers/${supplierId}/materials`);
+                const materials = await response.json();
+
+                if (materials.length === 0) {
+                    showAlert('Bu tedarikçiye ait malzeme bulunamadı', 'info');
+                    return;
+                }
+
+                let materialsList = materials.map(m => 
+                    `${m.materialCode} - ${m.materialName} (Stok: ${m.currentStock})`
+                ).join('\n');
+
+                alert(`Tedarikçi Malzemeleri:\n\n${materialsList}`);
+            } catch (error) {
+                console.error('Error loading supplier materials:', error);
+                showAlert('Malzemeler yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', searchSuppliers);
+        document.getElementById('statusFilter').addEventListener('change', searchSuppliers);
+    </script>
+</body>
+</html>

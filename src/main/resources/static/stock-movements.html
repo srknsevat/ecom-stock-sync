@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stok Hareketleri - Ecom Stock Sync</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .card-header { background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%); color: white; }
+        .table th { background-color: #f8f9fa; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .badge { font-size: 0.75em; }
+        .search-box { max-width: 300px; }
+        .stats-card { background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%); color: white; }
+        .movement-inbound { color: #28a745; }
+        .movement-outbound { color: #dc3545; }
+        .movement-adjustment { color: #ffc107; }
+        .movement-production { color: #17a2b8; }
+        .movement-consumption { color: #6f42c1; }
+        .movement-transfer { color: #6c757d; }
+        .quantity-positive { color: #28a745; font-weight: bold; }
+        .quantity-negative { color: #dc3545; font-weight: bold; }
+        .movement-form { max-width: 600px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Ecom Stock Sync</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin.html">Yönetim</a>
+                <a class="nav-link" href="/materials.html">Malzemeler</a>
+                <a class="nav-link" href="/boms.html">BOM Yönetimi</a>
+                <a class="nav-link" href="/atp.html">ATP Yönetimi</a>
+                <a class="nav-link" href="/suppliers.html">Tedarikçiler</a>
+                <a class="nav-link" href="/stock-movements.html">Stok Hareketleri</a>
+                <a class="nav-link" href="/logout">Çıkış</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Dashboard Summary -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-arrow-left-right"></i> Stok Hareketleri Dashboard</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="dashboardSummary">
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="todayMovements">-</h5>
+                                        <p class="card-text">Bugünkü Hareketler</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="monthMovements">-</h5>
+                                        <p class="card-text">Aylık Hareketler</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="totalMovements">-</h5>
+                                        <p class="card-text">Toplam Hareketler</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card stats-card">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title" id="todayInbound">-</h5>
+                                        <p class="card-text">Bugünkü Giriş</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Hareket ara...">
+                    <button class="btn btn-outline-secondary" onclick="searchMovements()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="movementTypeFilter">
+                    <option value="">Tüm Hareket Tipleri</option>
+                    <option value="INBOUND">Giriş</option>
+                    <option value="OUTBOUND">Çıkış</option>
+                    <option value="ADJUSTMENT">Düzeltme</option>
+                    <option value="PRODUCTION">Üretim</option>
+                    <option value="CONSUMPTION">Tüketim</option>
+                    <option value="TRANSFER">Transfer</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary" onclick="showAddMovementModal()">
+                    <i class="bi bi-plus"></i> Yeni Hareket
+                </button>
+            </div>
+        </div>
+
+        <!-- Movements Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Stok Hareketleri Listesi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Malzeme</th>
+                                        <th>Hareket Tipi</th>
+                                        <th>Miktar</th>
+                                        <th>Birim Maliyet</th>
+                                        <th>Toplam Maliyet</th>
+                                        <th>Referans</th>
+                                        <th>Açıklama</th>
+                                        <th>Operatör</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="movementsTableBody">
+                                    <tr>
+                                        <td colspan="10" class="text-center">Hareketler yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Movement Modal -->
+    <div class="modal fade" id="movementModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="movementModalTitle">Yeni Stok Hareketi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="movementForm" class="movement-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Malzeme *</label>
+                                    <select class="form-select" id="materialSelect" required>
+                                        <option value="">Malzeme seçin...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hareket Tipi *</label>
+                                    <select class="form-select" id="movementType" required>
+                                        <option value="">Hareket tipi seçin...</option>
+                                        <option value="INBOUND">Giriş</option>
+                                        <option value="OUTBOUND">Çıkış</option>
+                                        <option value="ADJUSTMENT">Düzeltme</option>
+                                        <option value="PRODUCTION">Üretim</option>
+                                        <option value="CONSUMPTION">Tüketim</option>
+                                        <option value="TRANSFER">Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Miktar *</label>
+                                    <input type="number" class="form-control" id="quantity" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Birim Maliyet</label>
+                                    <input type="number" class="form-control" id="unitCost" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Referans</label>
+                                    <input type="text" class="form-control" id="reference">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Operatör</label>
+                                    <input type="text" class="form-control" id="operator">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Açıklama</label>
+                            <textarea class="form-control" id="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hareket Tarihi</label>
+                            <input type="datetime-local" class="form-control" id="movementDate">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMovement()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movement Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hareket Detayları</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="movementDetails">
+                    <!-- Movement details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let movements = [];
+        let materials = [];
+        let currentMovementId = null;
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMovements();
+            loadMaterials();
+            loadDashboardSummary();
+        });
+
+        async function loadMovements() {
+            try {
+                const response = await fetch('/api/stock-movements');
+                movements = await response.json();
+                displayMovements(movements);
+            } catch (error) {
+                console.error('Error loading movements:', error);
+                showAlert('Hareketler yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        async function loadMaterials() {
+            try {
+                const response = await fetch('/api/materials');
+                materials = await response.json();
+                populateMaterialSelect();
+            } catch (error) {
+                console.error('Error loading materials:', error);
+            }
+        }
+
+        async function loadDashboardSummary() {
+            try {
+                const response = await fetch('/api/stock-movements/dashboard/summary');
+                const data = await response.json();
+                
+                document.getElementById('todayMovements').textContent = data.todayMovements;
+                document.getElementById('monthMovements').textContent = data.monthMovements;
+                document.getElementById('totalMovements').textContent = data.totalMovements;
+                document.getElementById('todayInbound').textContent = data.todayInbound;
+            } catch (error) {
+                console.error('Error loading dashboard summary:', error);
+            }
+        }
+
+        function populateMaterialSelect() {
+            const select = document.getElementById('materialSelect');
+            select.innerHTML = '<option value="">Malzeme seçin...</option>';
+            
+            materials.forEach(material => {
+                const option = document.createElement('option');
+                option.value = material.id;
+                option.textContent = `${material.materialCode} - ${material.materialName}`;
+                select.appendChild(option);
+            });
+        }
+
+        function displayMovements(movementsToShow) {
+            const tbody = document.getElementById('movementsTableBody');
+            tbody.innerHTML = '';
+
+            if (movementsToShow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center">Hareket bulunamadı</td></tr>';
+                return;
+            }
+
+            movementsToShow.forEach(movement => {
+                const row = document.createElement('tr');
+                const typeClass = getMovementTypeClass(movement.movementType);
+                const quantityClass = movement.quantity > 0 ? 'quantity-positive' : 'quantity-negative';
+                const quantityText = movement.quantity > 0 ? `+${movement.quantity}` : movement.quantity.toString();
+                
+                row.innerHTML = `
+                    <td>${new Date(movement.movementDate).toLocaleString('tr-TR')}</td>
+                    <td>
+                        <strong>${movement.material?.materialCode || 'N/A'}</strong><br>
+                        <small>${movement.material?.materialName || 'N/A'}</small>
+                    </td>
+                    <td><span class="badge ${typeClass}">${getMovementTypeText(movement.movementType)}</span></td>
+                    <td class="${quantityClass}">${quantityText}</td>
+                    <td>${movement.unitCost ? movement.unitCost + ' TL' : '-'}</td>
+                    <td>${movement.totalCost ? movement.totalCost + ' TL' : '-'}</td>
+                    <td>${movement.reference || '-'}</td>
+                    <td>${movement.description || '-'}</td>
+                    <td>${movement.operator || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="showMovementDetails(${movement.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="reverseMovement(${movement.id})">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteMovement(${movement.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getMovementTypeClass(movementType) {
+            const classes = {
+                'INBOUND': 'bg-success',
+                'OUTBOUND': 'bg-danger',
+                'ADJUSTMENT': 'bg-warning',
+                'PRODUCTION': 'bg-info',
+                'CONSUMPTION': 'bg-primary',
+                'TRANSFER': 'bg-secondary'
+            };
+            return classes[movementType] || 'bg-secondary';
+        }
+
+        function getMovementTypeText(movementType) {
+            const texts = {
+                'INBOUND': 'Giriş',
+                'OUTBOUND': 'Çıkış',
+                'ADJUSTMENT': 'Düzeltme',
+                'PRODUCTION': 'Üretim',
+                'CONSUMPTION': 'Tüketim',
+                'TRANSFER': 'Transfer'
+            };
+            return texts[movementType] || movementType;
+        }
+
+        function searchMovements() {
+            const keyword = document.getElementById('searchInput').value;
+            const movementType = document.getElementById('movementTypeFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            
+            let filteredMovements = movements;
+            
+            if (keyword) {
+                filteredMovements = filteredMovements.filter(m => 
+                    (m.reference && m.reference.toLowerCase().includes(keyword.toLowerCase())) ||
+                    (m.description && m.description.toLowerCase().includes(keyword.toLowerCase())) ||
+                    (m.operator && m.operator.toLowerCase().includes(keyword.toLowerCase()))
+                );
+            }
+            
+            if (movementType) {
+                filteredMovements = filteredMovements.filter(m => m.movementType === movementType);
+            }
+            
+            if (date) {
+                const filterDate = new Date(date);
+                filteredMovements = filteredMovements.filter(m => {
+                    const movementDate = new Date(m.movementDate);
+                    return movementDate.toDateString() === filterDate.toDateString();
+                });
+            }
+            
+            displayMovements(filteredMovements);
+        }
+
+        function showAddMovementModal() {
+            currentMovementId = null;
+            document.getElementById('movementModalTitle').textContent = 'Yeni Stok Hareketi';
+            document.getElementById('movementForm').reset();
+            document.getElementById('movementDate').value = new Date().toISOString().slice(0, 16);
+            
+            const modal = new bootstrap.Modal(document.getElementById('movementModal'));
+            modal.show();
+        }
+
+        async function saveMovement() {
+            const materialId = document.getElementById('materialSelect').value;
+            const movementType = document.getElementById('movementType').value;
+            const quantity = parseFloat(document.getElementById('quantity').value);
+            const unitCost = document.getElementById('unitCost').value ? parseFloat(document.getElementById('unitCost').value) : null;
+            const reference = document.getElementById('reference').value;
+            const description = document.getElementById('description').value;
+            const operator = document.getElementById('operator').value;
+            const movementDate = document.getElementById('movementDate').value;
+
+            if (!materialId || !movementType || !quantity) {
+                showAlert('Lütfen gerekli alanları doldurun', 'warning');
+                return;
+            }
+
+            try {
+                let response;
+                const params = new URLSearchParams({
+                    materialId: materialId,
+                    quantity: quantity
+                });
+                
+                if (unitCost) params.append('unitCost', unitCost);
+                if (reference) params.append('reference', reference);
+                if (description) params.append('description', description);
+                if (operator) params.append('operator', operator);
+
+                switch (movementType) {
+                    case 'INBOUND':
+                        response = await fetch(`/api/stock-movements/inbound?${params}`, { method: 'POST' });
+                        break;
+                    case 'OUTBOUND':
+                        response = await fetch(`/api/stock-movements/outbound?${params}`, { method: 'POST' });
+                        break;
+                    case 'ADJUSTMENT':
+                        response = await fetch(`/api/stock-movements/adjustment?${params}`, { method: 'POST' });
+                        break;
+                    case 'PRODUCTION':
+                        response = await fetch(`/api/stock-movements/production?${params}`, { method: 'POST' });
+                        break;
+                    case 'CONSUMPTION':
+                        response = await fetch(`/api/stock-movements/consumption?${params}`, { method: 'POST' });
+                        break;
+                    case 'TRANSFER':
+                        response = await fetch(`/api/stock-movements/transfer?${params}`, { method: 'POST' });
+                        break;
+                    default:
+                        showAlert('Geçersiz hareket tipi', 'danger');
+                        return;
+                }
+
+                if (response.ok) {
+                    showAlert('Stok hareketi oluşturuldu', 'success');
+                    loadMovements();
+                    loadDashboardSummary();
+                    bootstrap.Modal.getInstance(document.getElementById('movementModal')).hide();
+                } else {
+                    const error = await response.text();
+                    showAlert('Hareket oluşturulamadı: ' + error, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving movement:', error);
+                showAlert('Hareket kaydedilirken hata oluştu', 'danger');
+            }
+        }
+
+        async function deleteMovement(movementId) {
+            if (!confirm('Bu stok hareketini silmek istediğinizden emin misiniz?')) return;
+
+            try {
+                const response = await fetch(`/api/stock-movements/${movementId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('Stok hareketi silindi', 'success');
+                    loadMovements();
+                    loadDashboardSummary();
+                } else {
+                    showAlert('Hareket silinemedi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting movement:', error);
+                showAlert('Hareket silinirken hata oluştu', 'danger');
+            }
+        }
+
+        async function reverseMovement(movementId) {
+            const reason = prompt('İptal sebebi:');
+            if (!reason) return;
+
+            const operator = prompt('Operatör adı:');
+            if (!operator) return;
+
+            try {
+                const response = await fetch(`/api/stock-movements/${movementId}/reverse`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `reason=${encodeURIComponent(reason)}&operator=${encodeURIComponent(operator)}`
+                });
+
+                if (response.ok) {
+                    showAlert('Hareket iptal edildi', 'success');
+                    loadMovements();
+                    loadDashboardSummary();
+                } else {
+                    showAlert('Hareket iptal edilemedi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error reversing movement:', error);
+                showAlert('Hareket iptal edilirken hata oluştu', 'danger');
+            }
+        }
+
+        async function showMovementDetails(movementId) {
+            try {
+                const response = await fetch(`/api/stock-movements/${movementId}`);
+                const movement = await response.json();
+
+                const details = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Hareket Bilgileri</h6>
+                            <p><strong>ID:</strong> ${movement.id}</p>
+                            <p><strong>Malzeme:</strong> ${movement.material?.materialCode} - ${movement.material?.materialName}</p>
+                            <p><strong>Hareket Tipi:</strong> ${getMovementTypeText(movement.movementType)}</p>
+                            <p><strong>Miktar:</strong> ${movement.quantity}</p>
+                            <p><strong>Birim Maliyet:</strong> ${movement.unitCost || '-'} TL</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Detay Bilgileri</h6>
+                            <p><strong>Toplam Maliyet:</strong> ${movement.totalCost || '-'} TL</p>
+                            <p><strong>Referans:</strong> ${movement.reference || '-'}</p>
+                            <p><strong>Açıklama:</strong> ${movement.description || '-'}</p>
+                            <p><strong>Operatör:</strong> ${movement.operator || '-'}</p>
+                            <p><strong>Tarih:</strong> ${new Date(movement.movementDate).toLocaleString('tr-TR')}</p>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('movementDetails').innerHTML = details;
+                const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error loading movement details:', error);
+                showAlert('Hareket detayları yüklenirken hata oluştu', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', searchMovements);
+        document.getElementById('movementTypeFilter').addEventListener('change', searchMovements);
+        document.getElementById('dateFilter').addEventListener('change', searchMovements);
+    </script>
+</body>
+</html>

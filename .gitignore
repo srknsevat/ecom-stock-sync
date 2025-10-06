@@ -1,0 +1,28 @@
+# Maven
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Env
+*.env
+.env
+
+# Java
+hs_err_pid*
+
+# Build outputs
+*.class
+

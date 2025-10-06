@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Kullanıcı Yönetimi</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style> body{padding:24px} pre{background:#f8f9fa;padding:12px;border-radius:6px} </style>
+  <script>
+    async function loadUsers(){
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      const tbody = document.querySelector('#users tbody');
+      tbody.innerHTML = '';
+      data.forEach(u=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${u.id}</td><td>${u.username}</td><td>${u.role}</td><td>${u.enabled}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    async function createUser(){
+      const username = document.getElementById('u').value;
+      const password = document.getElementById('p').value;
+      const role = document.getElementById('r').value;
+      const res = await fetch('/api/admin/users',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password, role, enabled:true})});
+      document.getElementById('msg').textContent = res.ok ? 'Kullanıcı oluşturuldu' : 'Kullanıcı oluşturulamadı';
+      if (res.ok){ document.getElementById('u').value=''; document.getElementById('p').value=''; }
+      loadUsers();
+    }
+    window.addEventListener('load', loadUsers);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4">Kullanıcı Yönetimi</h1>
+    <div class="card mb-4">
+      <div class="card-header">Yeni Kullanıcı</div>
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3"><label class="form-label">Kullanıcı Adı</label><input id="u" class="form-control"></div>
+          <div class="col-md-3"><label class="form-label">Şifre</label><input id="p" type="password" class="form-control"></div>
+          <div class="col-md-3"><label class="form-label">Rol</label>
+            <select id="r" class="form-select">
+              <option value="ROLE_USER">ROLE_USER</option>
+              <option value="ROLE_ADMIN">ROLE_ADMIN</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-grid"><button class="btn btn-primary" onclick="createUser()">Oluştur</button></div>
+        </div>
+        <div class="mt-2 text-muted" id="msg"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Kullanıcılar</div>
+      <div class="card-body">
+        <table id="users" class="table table-sm">
+          <thead><tr><th>ID</th><th>Kullanıcı</th><th>Rol</th><th>Aktif</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+
