@@ -14,4 +14,4 @@ RUN mv target/ecom-stock-sync-0.0.1-SNAPSHOT.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["java","-Xmx512m","-Xms256m","-jar","app.jar","--spring.profiles.active=railway","--server.port=${PORT}"]
+ENTRYPOINT ["java","-Xmx512m","-Xms256m","-jar","app.jar","--spring.profiles.active=railway"]
